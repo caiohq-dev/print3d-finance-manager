@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { data, errosPorCampo, monetario, obrigatorio } from './validacao'
+import { data, errosPorCampo, monetario, obrigatorio, taxasOpcionais } from './validacao'
 
 describe('obrigatorio', () => {
   it('exige texto depois de aparar', () => {
@@ -38,6 +38,30 @@ describe('data', () => {
       ok: false,
       erro: 'Informe uma data válida (ex.: 06/11/2026).'
     })
+  })
+})
+
+describe('taxasOpcionais', () => {
+  it('texto vazio vale zero', () => {
+    expect(taxasOpcionais('150,00', '')).toEqual({ ok: true, valorCentavos: 0 })
+    expect(taxasOpcionais('150,00', '   ')).toEqual({ ok: true, valorCentavos: 0 })
+  })
+
+  it('converte as taxas quando cabem no valor', () => {
+    expect(taxasOpcionais('150,00', '12,50')).toEqual({ ok: true, valorCentavos: 1250 })
+  })
+
+  it('recusa taxas maiores que o valor, com mensagem clara', () => {
+    expect(taxasOpcionais('100,00', '100,01')).toEqual({
+      ok: false,
+      erro: 'As taxas não podem ser maiores que o valor cobrado.'
+    })
+  })
+
+  it('recusa taxas negativas pelo conversor', () => {
+    const aviso = taxasOpcionais('100,00', '-1')
+    expect(aviso.ok).toBe(false)
+    if (!aviso.ok) expect(aviso.erro).toBe('Informe um valor positivo.')
   })
 })
 

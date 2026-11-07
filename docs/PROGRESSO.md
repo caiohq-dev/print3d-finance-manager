@@ -2,14 +2,14 @@
 
 Este arquivo é a **memória entre sessões**. O agente lê no início e atualiza no fim de cada etapa.
 
-Última atualização: 07/11/2026 — etapa 03 concluída.
+Última atualização: 07/11/2026 — etapa 04 concluída.
 
 ## Etapas
 
 - [x] 01 — Fundação do projeto
 - [x] 02 — Utilitários (dinheiro e datas) + Categorias
 - [x] 03 — Despesas
-- [ ] 04 — Vendas
+- [x] 04 — Vendas
 - [ ] 05 — Resumo mensal
 - [ ] 06 — Conforto e qualidade
 - [ ] 07 — Backup, exportar e importar
@@ -48,6 +48,14 @@ Este arquivo é a **memória entre sessões**. O agente lê no início e atualiz
 - **Formulário `/despesas/nova` e `/despesas/:id/editar`:** data padrão hoje, categoria só entre as **ativas** (na edição, a categoria atual entra mesmo inativa), descrição, fornecedor, valor (vírgula aceita) e observação. Ao salvar, volta para a lista **do mês da data salva** com mensagem de sucesso; "Voltar"/"Cancelar" usam o `?mes=` de origem, então a edição mantém o mês da lista.
 - **`Campo`** ganhou uma variante para `<select>` (prop `select` + `children`), sem `cloneElement` e sem quebrar o uso com `input` nas categorias. CSS ganhou estilo de `select`/`input[type=date]`, navegação de mês, rodapé de tabela e mensagem de sucesso.
 - **Testes novos:** `src/main/servicos/despesas.test.ts` (10 testes) cobrindo conversão `1.234,56` → `123456`, valor/data inválidos sem gravar, valor zero, categoria inexistente, edição com atualização de `atualizado_em`, exclusão, id inexistente (erro, não exceção), bordas de mês (31/10, 01/11, 30/11, 01/12), totais (inclusive investimento) e ordenação no mesmo dia. Total: **80 testes passando**.
+
+### Etapa 04 — o que foi feito
+
+- **Camadas de vendas**, no mesmo padrão das despesas: serviço `src/main/servicos/vendas.ts` (listar por mês com totais, obter, criar, atualizar, excluir e listar canais; recebe a conexão), handlers finos em `src/main/ipc/vendas.ts` (canais `vendas:listar|obter|criar|atualizar|excluir|canais`), `window.api.vendas` no preload e contrato em `src/shared/tipos.ts` (`Venda`, `ListaVendas`, `EntradaVenda`).
+- **Lista `/vendas?mes=AAAA-MM`:** colunas Data, Cliente, Descrição, Canal, Valor, Taxas, Líquido (valor − taxas) e ações; ordem `data DESC, id DESC`; rodapé com **faturamento bruto**, **taxas** e **receita líquida** do mês. Mês vazio mostra "Nenhuma venda neste mês." e botão para adicionar. Exclusão com `ConfirmarModal` e mensagem de sucesso.
+- **Formulário `/vendas/nova` e `/vendas/:id/editar`:** data padrão hoje, cliente opcional, descrição obrigatória (exemplo "Suporte de headset, PLA preto"), canal como texto livre com `<datalist>` (canais já usados + Shopee, Mercado Livre, Instagram, WhatsApp e Presencial, sem repetir), valor cobrado, taxas opcionais (em branco conta como 0) e observação. Ao salvar, volta para a lista **do mês da data salva** com mensagem de sucesso.
+- **Validação no main** (repetida no formulário para resposta imediata): data válida, descrição não vazia, valor maior que zero, taxas não negativas e **não maiores que o valor** — esta última com mensagem no campo `taxas` ("As taxas não podem ser maiores que o valor cobrado."). Em erro, o formulário mantém tudo o que foi digitado.
+- **Testes novos:** `src/main/servicos/vendas.test.ts` (14 testes) cobrindo `150,00`/`12,50` → `15000`/`1250`/líquido `13750`, taxas maiores que o valor sem gravar, campos opcionais como `NULL`, taxas vazias = 0, validações, edição com `atualizado_em`, exclusão, id inexistente (erro "não encontrada", não exceção), bordas de mês (31/10, 01/11, 30/11, 01/12), totais, ordenação no mesmo dia e canais sem duplicata; mais 4 testes de `taxasOpcionais` em `validacao.test.ts`. Total: **99 testes passando**.
 
 ## Versões usadas
 
@@ -107,10 +115,24 @@ npm run dist       # instalador (etapa 08)
 - 07/11/2026 — **Voltar para o mês certo:** o "Editar" da lista leva `?mes=AAAA-MM`, o formulário usa esse mês no "Voltar"/"Cancelar" e, ao salvar, navega para o mês da **data salva** com a mensagem de sucesso no `state` da navegação.
 - 07/11/2026 — **Exclusão de despesa só na lista** (o formulário não tem botão Excluir), sempre com `ConfirmarModal`; depois de excluir, a lista recarrega e mostra "Despesa excluída.".
 - 07/11/2026 — Nenhuma dependência nova na etapa 03.
+- 07/11/2026 — **Venda recebe `valor` e `taxas` como texto** (como na despesa), e o serviço converte no main. O helper `taxasOpcionais` em `validacao.ts` centraliza a regra: texto vazio = 0, negativo recusado pelo `paraCentavos` e "maiores que o valor cobrado" com mensagem própria no campo `taxas`. A mesma função é usada pelo formulário, então a mensagem é idêntica nas duas camadas.
+- 07/11/2026 — **Totais de vendas calculados sobre as linhas do mês já carregadas** (mesma decisão das despesas): `totalCentavos`, `totalTaxasCentavos` e `totalLiquidoCentavos = bruto − taxas`. O `liquidoCentavos` de cada venda é calculado no mapeamento do serviço, não no renderer.
+- 07/11/2026 — **Lista de canais:** primeiro os cinco padrão (Shopee, Mercado Livre, Instagram, WhatsApp, Presencial), depois os canais já usados que não são padrão, em ordem alfabética; a comparação ignora maiúsculas/minúsculas e espaços nas pontas, e o resultado não repete. Exposição por `vendas:canais`.
+- 07/11/2026 — **Campo de taxas começa vazio no formulário** (`placeholder 0,00` e ajuda "em branco conta como 0"), coerente com a regra do serviço; na edição vem preenchido com o valor gravado. O rodapé da lista usa três linhas rotuladas (faturamento bruto, taxas, receita líquida), como no padrão de totais das despesas.
+- 07/11/2026 — Nenhuma dependência nova na etapa 04.
 
 ## Pendências / dúvidas
 
-- Nenhuma impeditiva. Observações da etapa 03:
+- Nenhuma impeditiva. Observações da etapa 04:
+  - `npm run typecheck`, `npm test` (99 testes), `npm run build` e `npm run lint` passam. O lint termina com **0 erros**; os avisos que restam são de fim de linha CRLF em arquivos antigos (o checkout usa `core.autocrlf=true` e o prettier espera LF) — nenhum é da etapa 04.
+  - O `npm run dev` subiu sem erro de inicialização (main, preload e renderer compilando e o Electron abrindo). A interação com a janela não é automatizada aqui; conferir manualmente:
+    1. Vendas → lançar vendas em dois meses diferentes (mudando a data) e conferir que cada mês mostra só as suas, com faturamento bruto, taxas e receita líquida corretos.
+    2. Lançar uma venda de `150,00` com taxas `12,50` → coluna Líquido `R$ 137,50` e rodapé coerente.
+    3. No campo Canal, conferir as sugestões (Shopee, Mercado Livre, Instagram, WhatsApp, Presencial); salvar uma venda com um canal novo e reabrir o formulário para ver a sugestão sem duplicar.
+    4. Testar validações: descrição vazia, valor `0`/`abc`, taxas maiores que o valor (mensagem no campo taxas) e taxas negativas; os campos devem manter o texto digitado.
+    5. Abrir "Editar" a partir de um mês, salvar e conferir que a lista volta para o mês da data salva; cancelar deve voltar ao mês de origem.
+    6. Excluir uma venda → `ConfirmarModal` com foco no Cancelar, Esc cancela; confirmar remove e mostra "Venda excluída.".
+- Observações da etapa 03 (continuam valendo):
   - `npm run typecheck`, `npm test` (80 testes) e `npm run build` passam. `npm run lint` termina com **0 erros**; os avisos que restam são de fim de linha CRLF em arquivos antigos (o checkout usa `core.autocrlf=true` e o prettier espera LF) — nenhum é da etapa 03.
   - O `npm run dev` subiu sem erro de inicialização (main, preload e renderer compilando e o Electron abrindo). A interação com a janela não é automatizada aqui; conferir manualmente:
     1. Despesas → lançar 3 despesas em meses diferentes (mudando a data) e conferir que cada mês mostra só as suas, com total correto.
@@ -145,3 +167,4 @@ npm run dist       # instalador (etapa 08)
 - 06/11/2026 — etapa 01 — concluída: esqueleto rodando (janela + menu, SQLite por migrations no main, IPC tipado `app.info()`, 5 testes passando, `typecheck` ok e smoke de empacotamento aprovado).
 - 06/11/2026 — etapa 02 — concluída: utilitários de dinheiro/datas/validação, componentes `Campo` e `ConfirmarModal` (com o hook `useConfirmar`) e CRUD de categorias ponta a ponta (tela → IPC → serviço → banco) nas três rotas; 70 testes passando, `typecheck` e `lint` sem erros, `build` ok e `npm run dev` abriu sem erro de inicialização.
 - 07/11/2026 — etapa 03 — concluída: `NavegacaoMes` reutilizável por `?mes=AAAA-MM`, CRUD de despesas ponta a ponta com validação no main, lista por mês com total e investimento, formulário com categorias ativas (e a atual na edição) e retorno ao mês da data salva; 80 testes passando, `typecheck` e `build` ok e `npm run dev` abriu sem erro de inicialização.
+- 07/11/2026 — etapa 04 — concluída: CRUD de vendas ponta a ponta (serviço, IPC, preload e contrato), lista por mês com faturamento bruto, taxas e receita líquida, formulário com sugestões de canal (`datalist`) e validação de taxas no main e na tela; 99 testes passando, `typecheck`, `build` e `lint` (0 erros) ok e `npm run dev` abriu sem erro de inicialização.

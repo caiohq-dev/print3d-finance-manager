@@ -350,6 +350,10 @@ body {
   border-top: 2px solid var(--borda);
 }
 
+.tabela tfoot tr + tr td {
+  border-top: 1px solid var(--borda);
+}
+
 .tabela .numero {
   text-align: right;
   font-variant-numeric: tabular-nums;

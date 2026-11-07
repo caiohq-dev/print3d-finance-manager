@@ -65,6 +65,44 @@ export type EntradaDespesa = {
   observacao: string
 }
 
+/** Venda como o renderer enxerga (sem `snake_case` do banco). */
+export type Venda = {
+  id: number
+  data: string
+  cliente: string | null
+  descricao: string
+  canal: string | null
+  valorCentavos: number
+  taxasCentavos: number
+  /** `valor_centavos - taxas_centavos`, calculado no serviço. */
+  liquidoCentavos: number
+  observacao: string | null
+  criadoEm: string
+  atualizadoEm: string
+}
+
+/** Vendas de um mês com os totais mostrados no rodapé da lista. */
+export type ListaVendas = {
+  mes: string
+  vendas: Venda[]
+  /** Faturamento bruto: soma de `valorCentavos`. */
+  totalCentavos: number
+  totalTaxasCentavos: number
+  /** Receita líquida: faturamento bruto − taxas. */
+  totalLiquidoCentavos: number
+}
+
+/** O que o formulário de venda envia. `valor` e `taxas` são o texto digitado. */
+export type EntradaVenda = {
+  data: string
+  cliente: string
+  descricao: string
+  canal: string
+  valor: string
+  taxas: string
+  observacao: string
+}
+
 /** Forma de `window.api`, derivada dos tipos acima. */
 export type Api = {
   app: {
@@ -84,5 +122,14 @@ export type Api = {
     criar: (entrada: EntradaDespesa) => Promise<Resultado<Despesa>>
     atualizar: (entrada: EntradaDespesa & { id: number }) => Promise<Resultado<Despesa>>
     excluir: (id: number) => Promise<Resultado<null>>
+  }
+  vendas: {
+    listar: (mes: string) => Promise<Resultado<ListaVendas>>
+    obter: (id: number) => Promise<Resultado<Venda>>
+    criar: (entrada: EntradaVenda) => Promise<Resultado<Venda>>
+    atualizar: (entrada: EntradaVenda & { id: number }) => Promise<Resultado<Venda>>
+    excluir: (id: number) => Promise<Resultado<null>>
+    /** Canais já usados + os sugeridos, sem repetir. */
+    canais: () => Promise<Resultado<string[]>>
   }
 }

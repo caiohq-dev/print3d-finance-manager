@@ -41,6 +41,26 @@ export function data(valor: string): Aviso {
 }
 
 /**
+ * Taxas opcionais das vendas: texto vazio vale 0, não pode ser negativo
+ * (`paraCentavos` já recusa) nem maior que o valor cobrado.
+ */
+export function taxasOpcionais(
+  valor: string,
+  texto: string
+): { ok: true; valorCentavos: number } | { ok: false; erro: string } {
+  if (texto.trim() === '') return { ok: true, valorCentavos: 0 }
+
+  const conversao = paraCentavos(texto)
+  if (!conversao.ok) return { ok: false, erro: conversao.erro }
+
+  const avisoValor = valorPositivo(valor)
+  if (avisoValor.ok && conversao.valor > avisoValor.valorCentavos) {
+    return { ok: false, erro: 'As taxas não podem ser maiores que o valor cobrado.' }
+  }
+  return { ok: true, valorCentavos: conversao.valor }
+}
+
+/**
  * Junta os avisos de cada campo num mapa de erros.
  * Devolve `null` quando todos os campos estão válidos.
  */

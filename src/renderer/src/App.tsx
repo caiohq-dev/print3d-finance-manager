@@ -5,6 +5,7 @@ import Despesas from './paginas/Despesas'
 import DespesaForm from './paginas/DespesaForm'
 import Resumo from './paginas/Resumo'
 import Vendas from './paginas/Vendas'
+import VendaForm from './paginas/VendaForm'
 
 function Layout(): React.JSX.Element {
   return (
@@ -30,6 +31,8 @@ function Layout(): React.JSX.Element {
         <Routes>
           <Route path="/" element={<Resumo />} />
           <Route path="/vendas" element={<Vendas />} />
+          <Route path="/vendas/nova" element={<VendaForm key="nova" />} />
+          <Route path="/vendas/:id/editar" element={<VendaForm key="editar" />} />
           <Route path="/despesas" element={<Despesas />} />
           <Route path="/despesas/nova" element={<DespesaForm key="nova" />} />
           <Route path="/despesas/:id/editar" element={<DespesaForm key="editar" />} />

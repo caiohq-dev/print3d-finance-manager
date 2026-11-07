@@ -5,6 +5,7 @@ import { migrar } from './db/migrar'
 import { registrarIpcApp } from './ipc/app'
 import { registrarIpcCategorias } from './ipc/categorias'
 import { registrarIpcDespesas } from './ipc/despesas'
+import { registrarIpcVendas } from './ipc/vendas'
 
 const emDesenvolvimento = !app.isPackaged
 
@@ -38,6 +39,7 @@ if (!podeRodar) {
     registrarIpcApp()
     registrarIpcCategorias(banco)
     registrarIpcDespesas(banco)
+    registrarIpcVendas(banco)
 
     criarJanela()
 

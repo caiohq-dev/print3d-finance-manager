@@ -20,6 +20,14 @@ const api: Api = {
     criar: (entrada) => ipcRenderer.invoke('despesas:criar', entrada),
     atualizar: (entrada) => ipcRenderer.invoke('despesas:atualizar', entrada),
     excluir: (id: number) => ipcRenderer.invoke('despesas:excluir', id)
+  },
+  vendas: {
+    listar: (mes: string) => ipcRenderer.invoke('vendas:listar', mes),
+    obter: (id: number) => ipcRenderer.invoke('vendas:obter', id),
+    criar: (entrada) => ipcRenderer.invoke('vendas:criar', entrada),
+    atualizar: (entrada) => ipcRenderer.invoke('vendas:atualizar', entrada),
+    excluir: (id: number) => ipcRenderer.invoke('vendas:excluir', id),
+    canais: () => ipcRenderer.invoke('vendas:canais')
   }
 }
 
