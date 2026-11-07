@@ -5,6 +5,14 @@ import type { Api, AppInfo, Resultado } from '../shared/tipos'
 const api: Api = {
   app: {
     info: (): Promise<Resultado<AppInfo>> => ipcRenderer.invoke('app:info')
+  },
+  categorias: {
+    listar: () => ipcRenderer.invoke('categorias:listar'),
+    obter: (id: number) => ipcRenderer.invoke('categorias:obter', id),
+    criar: (entrada) => ipcRenderer.invoke('categorias:criar', entrada),
+    atualizar: (entrada) => ipcRenderer.invoke('categorias:atualizar', entrada),
+    definirAtiva: (entrada) => ipcRenderer.invoke('categorias:definirAtiva', entrada),
+    excluir: (id: number) => ipcRenderer.invoke('categorias:excluir', id)
   }
 }
 

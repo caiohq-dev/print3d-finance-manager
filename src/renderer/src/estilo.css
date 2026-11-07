@@ -22,7 +22,12 @@ body,
 
 body {
   margin: 0;
-  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  font-family:
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    Roboto,
+    sans-serif;
   font-size: 15px;
   color: var(--texto);
   background: var(--fundo);
@@ -97,4 +102,259 @@ body {
   font-size: 12px;
   color: var(--texto-suave);
   word-break: break-all;
+}
+
+/* ---------- Páginas e formulários ---------- */
+
+.cabecalho-pagina {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.cabecalho-pagina h2 {
+  margin: 0;
+}
+
+.voltar {
+  font-size: 13px;
+  color: var(--destaque);
+  text-decoration: none;
+}
+
+.voltar:hover {
+  text-decoration: underline;
+}
+
+.formulario {
+  max-width: 560px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.form-acoes {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 4px;
+}
+
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.campo-cabecalho {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.campo-cabecalho label {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.campo-ajuda {
+  font-size: 12px;
+  color: var(--texto-suave);
+  max-width: 420px;
+}
+
+.campo input[type='text'],
+.campo input:not([type]) {
+  padding: 8px 10px;
+  border: 1px solid var(--borda);
+  border-radius: 6px;
+  font-size: 15px;
+  background: var(--painel);
+}
+
+.campo input:focus {
+  outline: 2px solid var(--destaque);
+  outline-offset: 1px;
+  border-color: var(--destaque);
+}
+
+.campo-mensagem-erro {
+  font-size: 13px;
+  color: #b91c1c;
+}
+
+.campo-erro-ativo input {
+  border-color: #b91c1c;
+}
+
+.erro-geral {
+  padding: 10px 12px;
+  border: 1px solid #f3b4b4;
+  border-radius: 6px;
+  background: #fdecec;
+  color: #991b1b;
+  font-size: 14px;
+}
+
+.aviso {
+  font-size: 13px;
+  color: var(--texto-suave);
+}
+
+.vazio {
+  color: var(--texto-suave);
+}
+
+/* ---------- Botões ---------- */
+
+.botao {
+  display: inline-block;
+  padding: 8px 14px;
+  border: 1px solid var(--borda);
+  border-radius: 6px;
+  background: var(--painel);
+  color: var(--texto);
+  font-size: 14px;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.botao:hover:not(:disabled) {
+  background: var(--destaque-fraco);
+}
+
+.botao:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.botao.principal {
+  background: var(--destaque);
+  border-color: var(--destaque);
+  color: #fff;
+}
+
+.botao.principal:hover:not(:disabled) {
+  background: #1e40af;
+}
+
+.botao.perigo {
+  background: #fee2e2;
+  border-color: #fca5a5;
+  color: #991b1b;
+}
+
+.botao.perigo:hover:not(:disabled) {
+  background: #fecaca;
+}
+
+.botao-suave,
+.botao-perigo {
+  padding: 4px 8px;
+  border: 1px solid var(--borda);
+  border-radius: 5px;
+  background: transparent;
+  font-size: 13px;
+  cursor: pointer;
+  color: var(--texto);
+}
+
+.botao-suave:hover,
+.botao-perigo:hover {
+  background: var(--destaque-fraco);
+}
+
+.botao-perigo {
+  color: #b91c1c;
+  border-color: #f3b4b4;
+}
+
+/* ---------- Tabela ---------- */
+
+.tabela {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--painel);
+  border: 1px solid var(--borda);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.tabela th,
+.tabela td {
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--borda);
+  text-align: left;
+  font-size: 14px;
+}
+
+.tabela th {
+  background: var(--destaque-fraco);
+  font-weight: 600;
+}
+
+.tabela tr:last-child td {
+  border-bottom: none;
+}
+
+.tabela .numero {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.tabela .inativa td {
+  color: var(--texto-suave);
+}
+
+.tabela .acoes {
+  white-space: nowrap;
+}
+
+.tabela .acoes > * + * {
+  margin-left: 8px;
+}
+
+.tabela .acoes a {
+  font-size: 13px;
+  color: var(--destaque);
+}
+
+/* ---------- Modal de confirmação ---------- */
+
+.modal-fundo {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+
+.modal {
+  width: min(420px, calc(100vw - 40px));
+  background: var(--painel);
+  border-radius: 8px;
+  padding: 18px 20px;
+  box-shadow: 0 12px 40px rgba(15, 23, 42, 0.25);
+}
+
+.modal h3 {
+  margin: 0 0 8px;
+  font-size: 16px;
+}
+
+.modal p {
+  margin: 0 0 16px;
+  font-size: 14px;
+  color: var(--texto);
+}
+
+.modal-acoes {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
 }

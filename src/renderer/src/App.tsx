@@ -1,5 +1,6 @@
 import { HashRouter, NavLink, Route, Routes } from 'react-router'
 import Categorias from './paginas/Categorias'
+import CategoriaForm from './paginas/CategoriaForm'
 import Despesas from './paginas/Despesas'
 import Resumo from './paginas/Resumo'
 import Vendas from './paginas/Vendas'
@@ -30,6 +31,8 @@ function Layout(): React.JSX.Element {
           <Route path="/vendas" element={<Vendas />} />
           <Route path="/despesas" element={<Despesas />} />
           <Route path="/categorias" element={<Categorias />} />
+          <Route path="/categorias/nova" element={<CategoriaForm key="nova" />} />
+          <Route path="/categorias/:id/editar" element={<CategoriaForm key="editar" />} />
         </Routes>
       </main>
     </div>

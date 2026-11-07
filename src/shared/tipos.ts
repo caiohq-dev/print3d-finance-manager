@@ -12,9 +12,36 @@ export type AppInfo = {
   caminhoBanco: string
 }
 
+/** Categoria como o renderer enxerga (sem `snake_case` do banco). */
+export type Categoria = {
+  id: number
+  nome: string
+  contaNoLucro: boolean
+  ativa: boolean
+}
+
+/** Categoria na lista, com a quantidade de despesas que usam dela. */
+export type CategoriaResumo = Categoria & {
+  quantidadeDespesas: number
+}
+
+/** O que o formulário de categoria envia para criar/editar. */
+export type EntradaCategoria = {
+  nome: string
+  contaNoLucro: boolean
+}
+
 /** Forma de `window.api`, derivada dos tipos acima. */
 export type Api = {
   app: {
     info: () => Promise<Resultado<AppInfo>>
+  }
+  categorias: {
+    listar: () => Promise<Resultado<CategoriaResumo[]>>
+    obter: (id: number) => Promise<Resultado<CategoriaResumo>>
+    criar: (entrada: EntradaCategoria) => Promise<Resultado<Categoria>>
+    atualizar: (entrada: EntradaCategoria & { id: number }) => Promise<Resultado<Categoria>>
+    definirAtiva: (entrada: { id: number; ativa: boolean }) => Promise<Resultado<Categoria>>
+    excluir: (id: number) => Promise<Resultado<null>>
   }
 }
