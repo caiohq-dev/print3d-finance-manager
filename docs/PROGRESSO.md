@@ -2,13 +2,13 @@
 
 Este arquivo é a **memória entre sessões**. O agente lê no início e atualiza no fim de cada etapa.
 
-Última atualização: 06/11/2026 — etapa 02 concluída.
+Última atualização: 07/11/2026 — etapa 03 concluída.
 
 ## Etapas
 
 - [x] 01 — Fundação do projeto
 - [x] 02 — Utilitários (dinheiro e datas) + Categorias
-- [ ] 03 — Despesas
+- [x] 03 — Despesas
 - [ ] 04 — Vendas
 - [ ] 05 — Resumo mensal
 - [ ] 06 — Conforto e qualidade
@@ -38,6 +38,16 @@ Este arquivo é a **memória entre sessões**. O agente lê no início e atualiz
 - Desativar/reativar por botão; excluir só sem despesas e sempre com `ConfirmarModal`. Se a categoria tem despesas, a própria tela mostra a mensagem do serviço mandando desativar (sem abrir modal) e o `ON DELETE RESTRICT` do banco segura por baixo.
 - Rotas nova/edição usam `key` para não compartilhar o estado do formulário.
 - Testes novos (Vitest, banco `:memory:` com as migrations reais): `src/shared/dinheiro.test.ts`, `src/shared/datas.test.ts`, `src/shared/validacao.test.ts` e `src/main/servicos/categorias.test.ts` (criar, duplicado variando maiúsculas/espaços, editar, desativar/reativar, excluir, exclusão bloqueada com despesa inserida direto no banco). Total: **70 testes passando**.
+
+### Etapa 03 — o que foi feito
+
+- **Navegação de mês reutilizável:** `NavegacaoMes` lê `?mes=AAAA-MM` da URL (via `useMesDaUrl`, que usa `useSearchParams` + `mesValidoOuAtual`) e mostra `← mês anterior`, o nome do mês (ex.: "novembro de 2026"), `próximo mês →` e o link "Mês atual". Os links mantêm os demais parâmetros da tela, então serve para despesas, vendas e resumo.
+- **Camadas de despesas:** serviço `src/main/servicos/despesas.ts` (listar por mês com totais, obter, criar, atualizar, excluir; recebe a conexão), handlers finos em `src/main/ipc/despesas.ts` (canais `despesas:listar|obter|criar|atualizar|excluir`), `window.api.despesas` no preload e contrato em `src/shared/tipos.ts` (`Despesa`, `ListaDespesas`, `EntradaDespesa`).
+- **Validação no main:** data válida, categoria existente, descrição obrigatória e valor maior que zero, com mensagens por campo (`data`, `categoriaId`, `descricao`, `valor`). O formulário repete a validação para resposta imediata e, em erro, mantém tudo o que foi digitado. `valor` chega como texto e o serviço converte com `paraCentavos` (aceita `1.234,56`). Helper novo `valorPositivo` em `validacao.ts` centraliza a regra "maior que zero".
+- **Lista `/despesas`:** colunas Data, Categoria, Descrição, Fornecedor, Valor e ações (Editar/Excluir); ordem `data DESC, id DESC`; categoria com `conta_no_lucro = 0` marcada como "(investimento)"; rodapé com **total do mês** e, quando houver, o total de investimento (fora do lucro). Mês vazio mostra "Nenhuma despesa neste mês" e botão para adicionar. Exclusão com `ConfirmarModal` e mensagem de sucesso.
+- **Formulário `/despesas/nova` e `/despesas/:id/editar`:** data padrão hoje, categoria só entre as **ativas** (na edição, a categoria atual entra mesmo inativa), descrição, fornecedor, valor (vírgula aceita) e observação. Ao salvar, volta para a lista **do mês da data salva** com mensagem de sucesso; "Voltar"/"Cancelar" usam o `?mes=` de origem, então a edição mantém o mês da lista.
+- **`Campo`** ganhou uma variante para `<select>` (prop `select` + `children`), sem `cloneElement` e sem quebrar o uso com `input` nas categorias. CSS ganhou estilo de `select`/`input[type=date]`, navegação de mês, rodapé de tabela e mensagem de sucesso.
+- **Testes novos:** `src/main/servicos/despesas.test.ts` (10 testes) cobrindo conversão `1.234,56` → `123456`, valor/data inválidos sem gravar, valor zero, categoria inexistente, edição com atualização de `atualizado_em`, exclusão, id inexistente (erro, não exceção), bordas de mês (31/10, 01/11, 30/11, 01/12), totais (inclusive investimento) e ordenação no mesmo dia. Total: **80 testes passando**.
 
 ## Versões usadas
 
@@ -89,10 +99,27 @@ npm run dist       # instalador (etapa 08)
 - 06/11/2026 — Lista de categorias ordena por **ativas primeiro e depois nome** (NOCASE); as inativas aparecem no fim.
 - 06/11/2026 — `Campo` recebe o input pela prop `input` (sem `cloneElement`), para manter a tipagem simples e o lint limpo.
 - 06/11/2026 — Nenhuma dependência nova na etapa 02 (só `react`, `react-dom` e `react-router` em runtime).
+- 07/11/2026 — **Entrada de despesa leva `valor` como texto** (o que o usuário digitou), não centavos. Assim o serviço aplica `paraCentavos` e devolve o erro no campo `valor`; o formulário usa a mesma regra (`valorPositivo`) só para resposta imediata. A conversão de dinheiro continua num lugar só.
+- 07/11/2026 — **Totais da lista são calculados sobre as linhas do mês já carregadas** (uma consulta só), não com um `SUM` separado. Como a lista já vem inteira, o total e o total de investimento ficam sempre coerentes com o que está na tela.
+- 07/11/2026 — **`Campo` aceita `<select>`** pela prop `select` + `children`, mantendo o input pela prop `input` (sem `cloneElement`, como decidido na etapa 02). Nenhuma mudança de uso nas categorias.
+- 07/11/2026 — **`useMesDaUrl` mora em arquivo próprio** (`componentes/useMesDaUrl.ts`) porque a regra `react-refresh/only-export-components` exige que um arquivo de componente exporte só componentes.
+- 07/11/2026 — **Marca "(investimento)" não é repetida** quando o nome da categoria já termina com ela (caso da seed "Equipamento (investimento)"); a marca aparece em qualquer categoria com `conta_no_lucro = 0`.
+- 07/11/2026 — **Voltar para o mês certo:** o "Editar" da lista leva `?mes=AAAA-MM`, o formulário usa esse mês no "Voltar"/"Cancelar" e, ao salvar, navega para o mês da **data salva** com a mensagem de sucesso no `state` da navegação.
+- 07/11/2026 — **Exclusão de despesa só na lista** (o formulário não tem botão Excluir), sempre com `ConfirmarModal`; depois de excluir, a lista recarrega e mostra "Despesa excluída.".
+- 07/11/2026 — Nenhuma dependência nova na etapa 03.
 
 ## Pendências / dúvidas
 
-- Nenhuma impeditiva. Observações da etapa 02:
+- Nenhuma impeditiva. Observações da etapa 03:
+  - `npm run typecheck`, `npm test` (80 testes) e `npm run build` passam. `npm run lint` termina com **0 erros**; os avisos que restam são de fim de linha CRLF em arquivos antigos (o checkout usa `core.autocrlf=true` e o prettier espera LF) — nenhum é da etapa 03.
+  - O `npm run dev` subiu sem erro de inicialização (main, preload e renderer compilando e o Electron abrindo). A interação com a janela não é automatizada aqui; conferir manualmente:
+    1. Despesas → lançar 3 despesas em meses diferentes (mudando a data) e conferir que cada mês mostra só as suas, com total correto.
+    2. Lançar uma despesa na categoria "Equipamento (investimento)" e conferir a marca "(investimento)" e a linha "Desse total, investimento (fora do lucro)".
+    3. Navegar com `←`/`→` e "Mês atual"; conferir que a URL muda (`?mes=AAAA-MM`) e que mês sem registros mostra a mensagem e o botão de adicionar.
+    4. Abrir "Editar" a partir de um mês, salvar e conferir que a lista volta para o mês da data salva; cancelar deve voltar ao mês de origem.
+    5. Tentar salvar com data vazia/inválida, sem categoria, descrição vazia e valor `0`/`abc` → mensagens ao lado dos campos e texto preservado.
+    6. Excluir uma despesa → `ConfirmarModal` com foco no Cancelar, Esc cancela; confirmar remove e mostra "Despesa excluída.".
+- Observações da etapa 02 (continuam valendo):
   - `npm run lint` passa com **0 erros**; ainda restam 3 avisos de formatação (prettier) em arquivos da etapa 01 — `migrar.ts`, `migrar.test.ts` e a linha 6 de `tipos.ts` — que não foram tocados para não alterar código antigo. Se quiser zerar: `npx prettier --write` neles.
   - O app subiu no `npm run dev` (main + preload + renderer compilando, banco `-dev` aberto) **sem erro de inicialização**, mas a interação com a janela não é automatizada aqui: conferir o checklist manual:
     1. Categorias → "Nova categoria" → criar com nome repetido de outra (ex.: `energia` para a seed "Energia", ou `  ENERGIA `) → erro **no campo**, com o texto digitado preservado.
@@ -117,3 +144,4 @@ npm run dist       # instalador (etapa 08)
 
 - 06/11/2026 — etapa 01 — concluída: esqueleto rodando (janela + menu, SQLite por migrations no main, IPC tipado `app.info()`, 5 testes passando, `typecheck` ok e smoke de empacotamento aprovado).
 - 06/11/2026 — etapa 02 — concluída: utilitários de dinheiro/datas/validação, componentes `Campo` e `ConfirmarModal` (com o hook `useConfirmar`) e CRUD de categorias ponta a ponta (tela → IPC → serviço → banco) nas três rotas; 70 testes passando, `typecheck` e `lint` sem erros, `build` ok e `npm run dev` abriu sem erro de inicialização.
+- 07/11/2026 — etapa 03 — concluída: `NavegacaoMes` reutilizável por `?mes=AAAA-MM`, CRUD de despesas ponta a ponta com validação no main, lista por mês com total e investimento, formulário com categorias ativas (e a atual na edição) e retorno ao mês da data salva; 80 testes passando, `typecheck` e `build` ok e `npm run dev` abriu sem erro de inicialização.

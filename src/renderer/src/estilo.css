@@ -128,6 +128,31 @@ body {
   text-decoration: underline;
 }
 
+/* ---------- Navegação de mês ---------- */
+
+.navegacao-mes {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.navegacao-mes .mes-titulo {
+  font-size: 15px;
+}
+
+.navegacao-mes .mes-atual-link {
+  margin-left: auto;
+  font-size: 13px;
+  color: var(--destaque);
+  text-decoration: none;
+}
+
+.navegacao-mes .mes-atual-link:hover {
+  text-decoration: underline;
+}
+
 .formulario {
   max-width: 560px;
   display: flex;
@@ -167,12 +192,18 @@ body {
 }
 
 .campo input[type='text'],
-.campo input:not([type]) {
+.campo input[type='date'],
+.campo input:not([type]),
+.campo select {
   padding: 8px 10px;
   border: 1px solid var(--borda);
   border-radius: 6px;
   font-size: 15px;
   background: var(--painel);
+}
+
+.campo select {
+  max-width: 100%;
 }
 
 .campo input:focus {
@@ -202,6 +233,19 @@ body {
 .aviso {
   font-size: 13px;
   color: var(--texto-suave);
+}
+
+.sucesso {
+  padding: 10px 12px;
+  border: 1px solid #b7e1c3;
+  border-radius: 6px;
+  background: #ecfdf3;
+  color: #166534;
+  font-size: 14px;
+}
+
+.vazio p {
+  margin: 0 0 12px;
 }
 
 .vazio {
@@ -298,6 +342,12 @@ body {
 
 .tabela tr:last-child td {
   border-bottom: none;
+}
+
+.tabela tfoot td {
+  font-weight: 600;
+  background: #fafbfc;
+  border-top: 2px solid var(--borda);
 }
 
 .tabela .numero {

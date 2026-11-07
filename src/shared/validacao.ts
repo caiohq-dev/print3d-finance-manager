@@ -21,6 +21,19 @@ export function monetario(valor: string): Aviso {
   return conversoParaAviso(conversao)
 }
 
+/**
+ * Valor monetário maior que zero (despesas e vendas).
+ * Devolve também os centavos convertidos, para o serviço não converter de novo.
+ */
+export function valorPositivo(
+  valor: string
+): { ok: true; valorCentavos: number } | { ok: false; erro: string } {
+  const conversao = paraCentavos(valor)
+  if (!conversao.ok) return { ok: false, erro: conversao.erro }
+  if (conversao.valor <= 0) return { ok: false, erro: 'Informe um valor maior que zero.' }
+  return { ok: true, valorCentavos: conversao.valor }
+}
+
 /** Data `AAAA-MM-DD` válida de verdade (rejeita `2026-02-30`). */
 export function data(valor: string): Aviso {
   if (!dataValida(valor)) return { ok: false, erro: 'Informe uma data válida (ex.: 06/11/2026).' }
