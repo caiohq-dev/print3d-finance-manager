@@ -1,4 +1,4 @@
-import { HashRouter, NavLink, Route, Routes } from 'react-router'
+import { HashRouter, Navigate, NavLink, Route, Routes } from 'react-router'
 import Categorias from './paginas/Categorias'
 import CategoriaForm from './paginas/CategoriaForm'
 import Despesas from './paginas/Despesas'
@@ -13,7 +13,7 @@ function Layout(): React.JSX.Element {
       <header className="cabecalho">
         <h1>Financeiro — Impressão 3D</h1>
         <nav className="menu">
-          <NavLink to="/" end className={({ isActive }) => (isActive ? 'ativo' : undefined)}>
+          <NavLink to="/resumo" className={({ isActive }) => (isActive ? 'ativo' : undefined)}>
             Resumo
           </NavLink>
           <NavLink to="/vendas" className={({ isActive }) => (isActive ? 'ativo' : undefined)}>
@@ -29,7 +29,8 @@ function Layout(): React.JSX.Element {
       </header>
       <main className="conteudo">
         <Routes>
-          <Route path="/" element={<Resumo />} />
+          <Route path="/" element={<Navigate to="/resumo" replace />} />
+          <Route path="/resumo" element={<Resumo />} />
           <Route path="/vendas" element={<Vendas />} />
           <Route path="/vendas/nova" element={<VendaForm key="nova" />} />
           <Route path="/vendas/:id/editar" element={<VendaForm key="editar" />} />

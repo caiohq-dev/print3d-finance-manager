@@ -412,3 +412,71 @@ body {
   justify-content: flex-end;
   gap: 8px;
 }
+
+/* ---------- Resumo mensal ---------- */
+
+.cartoes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 12px;
+}
+
+.cartao {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px;
+  background: var(--painel);
+  border: 1px solid var(--borda);
+  border-radius: 8px;
+}
+
+.cartao-rotulo {
+  font-size: 13px;
+  color: var(--texto-suave);
+}
+
+.cartao-valor {
+  font-size: 20px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.cartao-nota {
+  font-size: 12px;
+  color: var(--texto-suave);
+}
+
+.cartao-destaque {
+  border-color: #9db4ee;
+  background: var(--destaque-fraco);
+}
+
+.cartao-investimento {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-width: 320px;
+  margin-top: 12px;
+  padding: 12px 14px;
+  background: #fafbfc;
+  border: 1px dashed var(--borda);
+  border-radius: 8px;
+}
+
+.negativo {
+  color: #b91c1c;
+}
+
+.bloco-resumo {
+  margin-top: 24px;
+}
+
+.bloco-resumo h3 {
+  margin: 0 0 8px;
+  font-size: 16px;
+}
+
+.bloco-resumo .tabela a {
+  color: var(--destaque);
+}

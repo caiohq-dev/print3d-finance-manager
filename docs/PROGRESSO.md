@@ -2,7 +2,7 @@
 
 Este arquivo é a **memória entre sessões**. O agente lê no início e atualiza no fim de cada etapa.
 
-Última atualização: 07/11/2026 — etapa 04 concluída.
+Última atualização: 07/11/2026 — etapa 05 concluída.
 
 ## Etapas
 
@@ -10,7 +10,7 @@ Este arquivo é a **memória entre sessões**. O agente lê no início e atualiz
 - [x] 02 — Utilitários (dinheiro e datas) + Categorias
 - [x] 03 — Despesas
 - [x] 04 — Vendas
-- [ ] 05 — Resumo mensal
+- [x] 05 — Resumo mensal
 - [ ] 06 — Conforto e qualidade
 - [ ] 07 — Backup, exportar e importar
 - [ ] 08 — Empacotamento (instalador)
@@ -56,6 +56,15 @@ Este arquivo é a **memória entre sessões**. O agente lê no início e atualiz
 - **Formulário `/vendas/nova` e `/vendas/:id/editar`:** data padrão hoje, cliente opcional, descrição obrigatória (exemplo "Suporte de headset, PLA preto"), canal como texto livre com `<datalist>` (canais já usados + Shopee, Mercado Livre, Instagram, WhatsApp e Presencial, sem repetir), valor cobrado, taxas opcionais (em branco conta como 0) e observação. Ao salvar, volta para a lista **do mês da data salva** com mensagem de sucesso.
 - **Validação no main** (repetida no formulário para resposta imediata): data válida, descrição não vazia, valor maior que zero, taxas não negativas e **não maiores que o valor** — esta última com mensagem no campo `taxas` ("As taxas não podem ser maiores que o valor cobrado."). Em erro, o formulário mantém tudo o que foi digitado.
 - **Testes novos:** `src/main/servicos/vendas.test.ts` (14 testes) cobrindo `150,00`/`12,50` → `15000`/`1250`/líquido `13750`, taxas maiores que o valor sem gravar, campos opcionais como `NULL`, taxas vazias = 0, validações, edição com `atualizado_em`, exclusão, id inexistente (erro "não encontrada", não exceção), bordas de mês (31/10, 01/11, 30/11, 01/12), totais, ordenação no mesmo dia e canais sem duplicata; mais 4 testes de `taxasOpcionais` em `validacao.test.ts`. Total: **99 testes passando**.
+
+### Etapa 05 — o que foi feito
+
+- **Tela `/resumo?mes=AAAA-MM`** com o `NavegacaoMes`; a rota inicial `/` agora redireciona para `/resumo` (sem `?mes`, o `useMesDaUrl` abre o mês atual) e o menu aponta para ela. Em destaque: faturamento bruto, taxas, receita líquida, despesas do lucro, **lucro do mês** (vermelho e com o sinal `−` quando negativo) e margem (`0%` sem faturamento). Os investimentos aparecem **à parte**, com a nota "fora do cálculo do lucro".
+- **Três blocos:** despesas por categoria (valor e % do total de despesas, maiores primeiro, com a marca "(investimento)"); vendas por canal (quantidade e faturamento bruto, vendas sem canal como "Sem canal"); últimos 12 meses terminando no mês selecionado (faturamento bruto, despesas do lucro, lucro), cada mês como link para `/resumo?mes=...`, meses vazios com zeros e linha de total.
+- **Serviço `src/main/servicos/resumo.ts`** com uma função por bloco (`calcularIndicadores`, `listarDespesasPorCategoria`, `listarVendasPorCanal`, `listarUltimosMeses`) e `obterResumo` juntando tudo. Recebe a conexão, tem o SQL e devolve `Resultado<T>` em camelCase.
+- **Uma consulta por bloco:** indicadores em uma consulta com subselects; categorias com `GROUP BY`; canais com `GROUP BY` da expressão "Sem canal"; 12 meses em **uma consulta** com `UNION ALL` de vendas + despesas do lucro e `GROUP BY substr(data, 1, 7)`, usando intervalo `data >= ? AND data < ?`. Os meses sem movimento são preenchidos em JS (nada de 12 consultas em laço).
+- **Contrato e IPC:** tipos `ResumoIndicadores`, `DespesaCategoriaResumo`, `VendaCanalResumo`, `MesResumo` e `ResumoMensal` em `shared/tipos.ts`; handler fino em `src/main/ipc/resumo.ts` (`resumo:obter`), registrado no main e exposto como `window.api.resumo.obter(mes)`.
+- **Testes novos:** `src/main/servicos/resumo.test.ts` (9 testes) com o cenário do prompt (vendas de R$ 100,00 com R$ 10,00 de taxas e R$ 50,00 sem taxas; despesas de R$ 30,00 no lucro e R$ 200,00 de investimento) → R$ 150,00 / R$ 10,00 / R$ 140,00 / R$ 30,00 / R$ 110,00 / R$ 200,00 / 73,3%; mês vazio zerado sem divisão por zero; prejuízo (lucro −R$ 150,00 e margem −150%); vizinhos de 31/10 e 01/12 fora de novembro; 12 meses cobrindo virada de ano e meses vazios zerados; percentuais 87%/13%; agrupamento por canal com "Sem canal"; mês inválido. Total: **108 testes passando**.
 
 ## Versões usadas
 
@@ -120,10 +129,29 @@ npm run dist       # instalador (etapa 08)
 - 07/11/2026 — **Lista de canais:** primeiro os cinco padrão (Shopee, Mercado Livre, Instagram, WhatsApp, Presencial), depois os canais já usados que não são padrão, em ordem alfabética; a comparação ignora maiúsculas/minúsculas e espaços nas pontas, e o resultado não repete. Exposição por `vendas:canais`.
 - 07/11/2026 — **Campo de taxas começa vazio no formulário** (`placeholder 0,00` e ajuda "em branco conta como 0"), coerente com a regra do serviço; na edição vem preenchido com o valor gravado. O rodapé da lista usa três linhas rotuladas (faturamento bruto, taxas, receita líquida), como no padrão de totais das despesas.
 - 07/11/2026 — Nenhuma dependência nova na etapa 04.
+- 07/11/2026 — **Resumo em uma chamada IPC (`resumo:obter`)**: o serviço mantém uma função por bloco (testável isoladamente), e `obterResumo` junta os quatro resultados. A tela faz uma requisição só e recebe indicadores + três blocos.
+- 07/11/2026 — **Tabela de 12 meses em uma consulta**: `UNION ALL` de vendas (valor e taxas) e despesas do lucro, com `GROUP BY substr(data, 1, 7)` e intervalo `data >= ? AND data < ?`. Os meses sem linha são preenchidos em JS, em ordem crescente, terminando no mês selecionado.
+- 07/11/2026 — **Lucro da tabela de 12 meses usa a mesma regra do mês**: faturamento bruto − taxas − despesas do lucro. Investimentos continuam fora.
+- 07/11/2026 — **Margem e percentuais arredondados a uma casa decimal no serviço**, por conta inteira (`Math.round(parte * 1000 / total) / 10`), sem float acumulado; total zero devolve 0 (sem divisão por zero). A tela formata com vírgula (`73,3%`, `0%`).
+- 07/11/2026 — **Rota inicial**: `/` redireciona para `/resumo` e o `NavLink` do menu aponta para `/resumo`. Sem `?mes`, `useMesDaUrl` resolve o mês atual, então abrir o app cai no resumo do mês corrente.
+- 07/11/2026 — **"Sem canal"**: no bloco de canais, `NULL` e texto vazio (após `TRIM`) viram "Sem canal"; grafias diferentes do mesmo canal continuam linhas separadas (o agrupamento é pelo texto gravado, como na lista de canais).
+- 07/11/2026 — **Sinal do prejuízo**: a tela troca o `-` do `Intl` por `−` (U+2212) e aplica a classe `.negativo` (vermelho), sem depender só da cor.
+- 07/11/2026 — **Investimento à parte**: o cartão de investimentos fica fora da grade dos seis indicadores, com borda tracejada e a nota "fora do cálculo do lucro"; a marca "(investimento)" usa a mesma regra da lista de despesas (não repete quando o nome já termina com ela).
+- 07/11/2026 — Nenhuma dependência nova na etapa 05.
 
 ## Pendências / dúvidas
 
-- Nenhuma impeditiva. Observações da etapa 04:
+- Nenhuma impeditiva. Observações da etapa 05:
+  - `npm run typecheck`, `npm test` (108 testes) e `npm run build` passam. `npx eslint` nos arquivos da etapa 05 não acusa nada; o `npm run lint` do projeto segue com **0 erros** e avisos antigos de CRLF em arquivos das etapas anteriores.
+  - O `npm run dev` subiu sem erro de inicialização (main, preload e renderer compilando e o Electron abrindo). A interação com a janela não é automatizada aqui; conferir manualmente:
+    1. Abrir o app: a rota inicial deve cair em `/resumo` do **mês atual**, com os cartões e os três blocos.
+    2. Montar o cenário do prompt no mesmo mês: vendas de `100,00` (taxas `10,00`) e `50,00` (sem taxas); despesas de `30,00` em "Filamento / Resina" e `200,00` em "Equipamento (investimento)". Conferir R$ 150,00 de faturamento, R$ 10,00 de taxas, R$ 140,00 líquidos, R$ 30,00 de despesas do lucro, R$ 110,00 de lucro, R$ 200,00 de investimentos e 73,3% de margem.
+    3. Comparar com as listas de Vendas e Despesas do mesmo mês (os totais do rodapé devem bater com os cartões).
+    4. Navegar para um mês sem registros: tudo zerado e sem erro (margem `0%`); num mês de prejuízo, o lucro deve aparecer em vermelho com `−` e a margem negativa.
+    5. Lançar vendas com canal, sem canal e despesas em categorias diferentes: conferir a ordem "maiores primeiro", os percentuais, "Sem canal" e a marca "(investimento)".
+    6. Na tabela dos últimos 12 meses, conferir a virada de ano, meses vazios com `R$ 0,00`, a linha de total e que clicar em cada mês muda `?mes=AAAA-MM` e recarrega o resumo.
+    7. Os investimentos devem ficar à parte, com a nota "fora do cálculo do lucro", e não alterar o lucro.
+- Observações da etapa 04 (continuam valendo):
   - `npm run typecheck`, `npm test` (99 testes), `npm run build` e `npm run lint` passam. O lint termina com **0 erros**; os avisos que restam são de fim de linha CRLF em arquivos antigos (o checkout usa `core.autocrlf=true` e o prettier espera LF) — nenhum é da etapa 04.
   - O `npm run dev` subiu sem erro de inicialização (main, preload e renderer compilando e o Electron abrindo). A interação com a janela não é automatizada aqui; conferir manualmente:
     1. Vendas → lançar vendas em dois meses diferentes (mudando a data) e conferir que cada mês mostra só as suas, com faturamento bruto, taxas e receita líquida corretos.
@@ -168,3 +196,4 @@ npm run dist       # instalador (etapa 08)
 - 06/11/2026 — etapa 02 — concluída: utilitários de dinheiro/datas/validação, componentes `Campo` e `ConfirmarModal` (com o hook `useConfirmar`) e CRUD de categorias ponta a ponta (tela → IPC → serviço → banco) nas três rotas; 70 testes passando, `typecheck` e `lint` sem erros, `build` ok e `npm run dev` abriu sem erro de inicialização.
 - 07/11/2026 — etapa 03 — concluída: `NavegacaoMes` reutilizável por `?mes=AAAA-MM`, CRUD de despesas ponta a ponta com validação no main, lista por mês com total e investimento, formulário com categorias ativas (e a atual na edição) e retorno ao mês da data salva; 80 testes passando, `typecheck` e `build` ok e `npm run dev` abriu sem erro de inicialização.
 - 07/11/2026 — etapa 04 — concluída: CRUD de vendas ponta a ponta (serviço, IPC, preload e contrato), lista por mês com faturamento bruto, taxas e receita líquida, formulário com sugestões de canal (`datalist`) e validação de taxas no main e na tela; 99 testes passando, `typecheck`, `build` e `lint` (0 erros) ok e `npm run dev` abriu sem erro de inicialização.
+- 07/11/2026 — etapa 05 — concluída: tela inicial `/resumo?mes=AAAA-MM` com cartões de faturamento, taxas, receita líquida, despesas do lucro, lucro (negativo em vermelho com `−`) e margem, investimentos à parte, blocos de despesas por categoria, vendas por canal e últimos 12 meses (uma consulta por bloco, meses vazios zerados e linha de total); serviço `resumo.ts`, IPC `resumo:obter` e `window.api.resumo`; 108 testes passando (cenário do prompt incluso), `typecheck`, `build` e `lint` (0 erros) ok e `npm run dev` abriu sem erro de inicialização.

@@ -28,6 +28,9 @@ const api: Api = {
     atualizar: (entrada) => ipcRenderer.invoke('vendas:atualizar', entrada),
     excluir: (id: number) => ipcRenderer.invoke('vendas:excluir', id),
     canais: () => ipcRenderer.invoke('vendas:canais')
+  },
+  resumo: {
+    obter: (mes: string) => ipcRenderer.invoke('resumo:obter', mes)
   }
 }
 

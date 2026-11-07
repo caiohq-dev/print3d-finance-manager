@@ -103,6 +103,57 @@ export type EntradaVenda = {
   observacao: string
 }
 
+/** Indicadores do mês do resumo (todos em centavos, exceto `margem`). */
+export type ResumoIndicadores = {
+  mes: string
+  faturamentoBrutoCentavos: number
+  taxasCentavos: number
+  /** Faturamento bruto − taxas. */
+  receitaLiquidaCentavos: number
+  /** Despesas de categorias com `contaNoLucro = true`. */
+  despesasLucroCentavos: number
+  /** Receita líquida − despesas do lucro. Pode ser negativo. */
+  lucroCentavos: number
+  /** Despesas de investimento, fora do lucro. */
+  investimentosCentavos: number
+  /** Lucro ÷ faturamento bruto, em %, com uma casa decimal. `0` sem faturamento. */
+  margem: number
+}
+
+/** Linha do bloco "Despesas por categoria". */
+export type DespesaCategoriaResumo = {
+  categoriaId: number
+  categoriaNome: string
+  contaNoLucro: boolean
+  valorCentavos: number
+  /** Valor ÷ total de despesas do mês, em %, com uma casa decimal. */
+  percentualDoTotal: number
+}
+
+/** Linha do bloco "Vendas por canal". Vendas sem canal viram "Sem canal". */
+export type VendaCanalResumo = {
+  canal: string
+  quantidade: number
+  faturamentoBrutoCentavos: number
+}
+
+/** Linha do bloco "Últimos 12 meses". */
+export type MesResumo = {
+  mes: string
+  faturamentoBrutoCentavos: number
+  despesasLucroCentavos: number
+  lucroCentavos: number
+}
+
+/** Tudo o que a tela de resumo mostra para o mês selecionado. */
+export type ResumoMensal = {
+  indicadores: ResumoIndicadores
+  despesasPorCategoria: DespesaCategoriaResumo[]
+  vendasPorCanal: VendaCanalResumo[]
+  /** 12 meses em ordem crescente, terminando no mês selecionado. */
+  ultimosMeses: MesResumo[]
+}
+
 /** Forma de `window.api`, derivada dos tipos acima. */
 export type Api = {
   app: {
@@ -131,5 +182,9 @@ export type Api = {
     excluir: (id: number) => Promise<Resultado<null>>
     /** Canais já usados + os sugeridos, sem repetir. */
     canais: () => Promise<Resultado<string[]>>
+  }
+  resumo: {
+    /** Indicadores e blocos de um mês (`AAAA-MM`) em uma chamada só. */
+    obter: (mes: string) => Promise<Resultado<ResumoMensal>>
   }
 }
