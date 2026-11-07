@@ -1,0 +1,9 @@
+node_modules
+dist
+out
+release
+*.db
+*.db-*
+.DS_Store
+.eslintcache
+*.log*
